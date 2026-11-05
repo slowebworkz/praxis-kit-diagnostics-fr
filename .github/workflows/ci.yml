@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+
+jobs:
+  validate:
+    name: Validate against praxis-kit-diagnostics ${{ matrix.diagnostics }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The lower bound of the peer range, and the newest release.
+        diagnostics: ['0.2.0', 'latest']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # From npm when it is there; until it is published, built from the monorepo source (no publishing).
+      - run: node scripts/provide-diagnostics.mjs ${{ matrix.diagnostics }}
+      # Structure must be valid; completeness is gated separately by --min-coverage.
+      - run: npx praxis-kit-diagnostics validate catalog/fr.json --min-coverage 100
+      - run: npm test
+
+  package:
+    name: Pack and install in a clean directory
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/provide-diagnostics.mjs 0.2.0
+      - run: npm run check:package
