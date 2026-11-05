@@ -19,8 +19,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm install --no-audit --no-fund
-      - run: npm install --no-save --no-audit --no-fund praxis-kit-diagnostics@${{ matrix.diagnostics }}
+      # From npm when it is there; until it is published, built from the monorepo source (no publishing).
+      - run: node scripts/provide-diagnostics.mjs ${{ matrix.diagnostics }}
       # Structure must be valid; completeness is gated separately by --min-coverage.
       - run: npx praxis-kit-diagnostics validate catalog/fr.json --min-coverage 100
       - run: npm test
@@ -33,5 +33,5 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm install --no-audit --no-fund
+      - run: node scripts/provide-diagnostics.mjs 0.2.0
       - run: npm run check:package
