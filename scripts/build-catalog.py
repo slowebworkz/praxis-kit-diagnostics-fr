@@ -1,0 +1,171 @@
+# Source of the French catalog. Run: python3 -I scripts/build-catalog.py
+# It writes catalog/fr.json. Edit the strings here (or edit catalog/fr.json directly and delete this
+# script once the catalog is hand-maintained). ⟦ and ⟧ become « and » with non-breaking spaces.
+import json
+
+RAT_NAME = "La spécification WAI-ARIA « ARIA in HTML » limite les rôles explicites qu’un élément natif peut prendre. Un rôle hors de cet ensemble est ignoré ou produit un comportement indéfini dans les technologies d’assistance."
+RAT_VALUE = "Les attributs ARIA dont la valeur est invalide sont ignorés en silence par les technologies d’assistance : le balisage perd alors tout sens."
+NAME_FIELD = [
+    {"title": "Ajouter aria-label", "description": "Définissez aria-label=\"…\" directement sur le champ."},
+    {"title": "Ajouter un <label> associé", "description": "Entourez le champ d’un <label>, ou faites pointer un <label for=\"…\"> vers son id."},
+]
+
+def value_entry(expected, desc):
+    return {
+        "message": "\"{attr}\" a une valeur invalide ({got}). Attendu : " + expected + ".",
+        "rationale": RAT_VALUE,
+        "suggestions": [{"title": "Utiliser une valeur valide pour {attr}", "description": "Valeurs valides : " + desc + "."}],
+    }
+
+M = {
+ "HTML3002": {"message": "<{tag}> a un role=\"\" explicite et vide. Omettez plutôt l’attribut."},
+ "HTML3003": {"message": "<{tag}> a déjà le rôle implicite role=\"{implicitRole}\". Évitez d’attribuer un rôle redondant."},
+ "HTML3004": {"message": "<{tag}> ne devrait pas remplacer son rôle implicite role=\"{implicitRole}\" par role=\"{role}\"."},
+ "HTML3005": {"message": "<{tag}> est un élément autonome dont le rôle implicite est role=\"{implicitRole}\". L’attribution de role=\"region\" a été supprimée."},
+ "HTML3006": {"message": "<{tag}> a un rôle de repère fixe, role=\"{implicitRole}\". role=\"{role}\" le remplace et perturbe les technologies d’assistance. Le remplacement a été supprimé."},
+ "HTML3007": {"message": "<{child}> n’est pas un enfant direct valide de <{parent}>. Autorisé : {allowed|list-or}."},
+ "HTML3007.phrasing": {"message": "<{child}> n’est pas un enfant direct valide de <{parent}>. Autorisé : le contenu phrasé, hors descendants interactifs tels que <a>, <button> et les contrôles de formulaire."},
+ "HTML3007.unspecified": {"message": "<{child}> n’est pas un enfant direct valide de <{parent}>. Autorisé : le modèle de contenu permis par l’élément parent."},
+ "HTML3008": {"message": "role=\"{role}\" n’est pas permis sur <{tag}>. Rôle(s) alternatif(s) autorisé(s) : {allowedRoles|quote|list-unit}.", "rationale": RAT_NAME},
+ "HTML3008.none": {"message": "role=\"{role}\" n’est pas permis sur <{tag}>. Rôle(s) alternatif(s) autorisé(s) : aucun — aucun rôle explicite n’est permis sur cet élément.", "rationale": RAT_NAME},
+ "HTML3101": {
+  "message": "type=\"{type}\" n’est pas une valeur définie par la spécification HTML. Les navigateurs se rabattent en silence sur type=\"text\".",
+  "rationale": "Un type d’input inconnu n’est pas un balisage invalide — la spécification impose le repli sur « text » — mais cela révèle souvent une faute de frappe : le champ continue de fonctionner tout en perdant en silence le comportement propre au type voulu (validation, clavier virtuel, sélecteur).",
+  "suggestions": [{"title": "Vérifier la valeur du type", "description": "\"{type}\" ne correspond à aucun type d’input HTML5."}]},
+ "HTML31xx.attributeIgnored": {
+  "message": "\"{attribute}\" est ignoré sur <input type=\"{type}\">.",
+  "rationale": "\"{attribute}\" n’a d’effet que lorsque type vaut l’un de : {allowedTypes|quote|list-unit}. Les navigateurs l’ignorent en silence sur les autres types d’input.",
+  "suggestions": [{"title": "Supprimer \"{attribute}\"", "description": "\"{attribute}\" n’agit sur <input> que lorsque type vaut l’un de : {allowedTypes|quote|list-unit}."}]},
+ "HTML3201": {
+  "message": "href=\"{href}\" utilise un schéma qui exécute du contenu contrôlé par un attaquant lors de la navigation. Il a été supprimé.",
+  "rationale": "Les URL « javascript: », « data: » et « vbscript: » sont un vecteur XSS courant lorsque href provient d’une source non fiable — aucune des trois n’est nécessaire pour une navigation légitime."},
+ "ARIA2003": {
+  "message": "\"{key}\" n’est pas valide sur role=\"{role}\". Il sera supprimé.",
+  "rationale": "Les attributs ARIA invalides sont ignorés par les technologies d’assistance et peuvent déclencher des avertissements sur l’arbre d’accessibilité dans les outils de développement.",
+  "suggestions": [{"title": "Supprimer l’attribut", "description": "\"{key}\" ne fait pas partie des attributs autorisés pour role=\"{role}\"."}]},
+ "ARIA2004": {
+  "message": "role=\"{role}\" implique aria-live=\"{impliedLive}\", mais il est absent. Il a été ajouté.",
+  "rationale": "Les rôles de région dynamique annoncent aux lecteurs d’écran les changements de contenu. Sans aria-live, le niveau de politesse n’est pas précisé et les annonces risquent de rester muettes.",
+  "suggestions": [{"title": "Ajouter aria-live=\"{impliedLive}\"", "description": "role=\"{role}\" implique conventionnellement aria-live=\"{impliedLive}\".", "fix": "aria-live=\"{impliedLive}\""}]},
+ "ARIA2005": {
+  "message": "role=\"{role}\" est une région dynamique. Envisagez aria-atomic=\"true\" si la région entière doit être annoncée d’un bloc, ou aria-atomic=\"false\" si seuls les nœuds modifiés doivent être lus.",
+  "rationale": "aria-atomic détermine si la technologie d’assistance annonce toute la région dynamique ou seulement les nœuds modifiés. Si on l’omet, le comportement dépend du navigateur."},
+ "ARIA2006": {
+  "message": "aria-relevant contient des jetons invalides : {invalid|quote|list-unit}. Les jetons valides sont : additions, removals, text, all.",
+  "rationale": "aria-relevant accepte une liste, séparée par des espaces, de types de changements. Les jetons inconnus sont ignorés en silence par les technologies d’assistance, ce qui rend l’attribut inopérant.",
+  "suggestions": [{"title": "N’utiliser que des jetons valides", "description": "Valeurs valides : additions, removals, text, all (ou une combinaison séparée par des espaces)."}]},
+ "ARIA2007": {
+  "message": "aria-relevant contient \"all\" avec d’autres jetons. \"all\" englobe additions, removals et text — utilisez aria-relevant=\"all\" seul.",
+  "rationale": "\"all\" équivaut à \"additions removals text\". Le combiner à d’autres jetons est redondant et peut dérouter les personnes qui lisent le balisage.",
+  "suggestions": [{"title": "Utiliser aria-relevant=\"all\"", "fix": "aria-relevant=\"all\""}]},
+ "ARIA2008": {
+  "message": "Rôle \"{role}\" invalide sur <{tag}>.",
+  "rationale": "Un rôle ARIA inconnu ou mal appliqué est ignoré par les technologies d’assistance et peut dégrader l’accessibilité de l’élément."},
+ "ARIA2009": {
+  "message": "<{tag}> n’a pas de nom accessible. Ajoutez aria-label ou aria-labelledby.",
+  "rationale": "Les éléments dotés d’un rôle interactif, et les repères qui apparaissent plusieurs fois dans une page, ont besoin d’un nom accessible pour que les technologies d’assistance puissent les distinguer. Un repère unique de son type n’en exige pas.",
+  "suggestions": [
+   {"title": "Ajouter aria-label", "description": "Ajoutez aria-label=\"…\" directement sur l’élément <{tag}>."},
+   {"title": "Ajouter aria-labelledby", "description": "Faites pointer aria-labelledby vers l’id d’un titre ou d’une étiquette existants."}]},
+ "ARIA2010": {
+  "message": "\"{attr}\" n’est pas autorisé sur un <{tag}> de présentation. Les éléments de présentation sont invisibles pour les technologies d’assistance.",
+  "rationale": "role=\"none\" et role=\"presentation\" (y compris <img alt=\"\">) retirent un élément de l’arbre d’accessibilité. Les attributs ARIA portés par de tels éléments sont ignorés par les technologies d’assistance.",
+  "suggestions": [{"title": "Supprimer l’attribut", "description": "\"{attr}\" est sans effet lorsque l’élément a role=\"none\" ou role=\"presentation\"."}]},
+ "ARIA2011": {
+  "message": "aria-hidden=\"true\" ne doit pas être utilisé sur des éléments <{tag}> focalisables. Les personnes qui naviguent au clavier avec un lecteur d’écran rencontreront l’élément sans recevoir aucune information à son sujet.",
+  "rationale": "aria-hidden retire un élément de l’arbre d’accessibilité tout en le laissant accessible au clavier. Cela crée un « fantôme » : un élément focalisable que les technologies d’assistance ne peuvent pas décrire.",
+  "suggestions": [
+   {"title": "Supprimer aria-hidden", "description": "Si l’élément doit être masqué pour tout le monde, utilisez plutôt l’attribut HTML hidden ou la règle CSS display:none."},
+   {"title": "Rendre l’élément non focalisable", "description": "Si l’élément est volontairement décoratif, ajoutez tabindex=\"-1\" et désactivez-le afin qu’il ne soit pas atteignable au clavier."}]},
+ "ARIA2012": {
+  "message": "\"{attr}\" est requis pour role=\"{role}\", mais il est absent.",
+  "rationale": "WAI-ARIA 1.2 précise les états et propriétés requis pour certains rôles. Sans \"{attr}\", la technologie d’assistance ne peut pas communiquer correctement l’état de l’élément.",
+  "suggestions": [{"title": "Ajouter {attr}", "description": "role=\"{role}\" exige la présence de \"{attr}\"."}]},
+ "ARIA2013": {
+  "message": "\"{attr}\" a une valeur invalide ({got}). Attendu : {values|quote|list-or}.",
+  "rationale": RAT_VALUE,
+  "suggestions": [{"title": "Utiliser une valeur valide pour {attr}", "description": "Valeurs valides : {values|quote|list-or}."}]},
+ "ARIA2013.number": value_entry("un nombre fini", "un nombre fini"),
+ "ARIA2013.integer": value_entry("un entier", "un entier"),
+ "ARIA2013.integerMin": value_entry("un entier ≥ {min}", "un entier ≥ {min}"),
+ "ARIA2013.integerMax": value_entry("un entier ≤ {max}", "un entier ≤ {max}"),
+ "ARIA2013.integerRange": value_entry("un entier compris entre {min} et {max}", "un entier compris entre {min} et {max}"),
+ "ARIA2014": {
+  "message": "aria-level=\"{level}\" est redondant sur <{tag}> : l’élément a déjà un niveau de titre implicite de {level}. Supprimez l’attribut.",
+  "rationale": "Répéter l’aria-level implicite ajoute du bruit sans valeur sémantique. N’utilisez aria-level que pour remplacer le niveau de titre natif (par exemple aria-level=\"3\" sur <h2>).",
+  "suggestions": [{"title": "Supprimer aria-level", "description": "<{tag}> implique déjà aria-level=\"{level}\"."}]},
+ "ARIA2015": {
+  "message": "\"{attr}\" est interdit sur role=\"{role}\" — ce rôle n’accepte pas de nom fourni par l’auteur. Il sera supprimé.",
+  "rationale": "WAI-ARIA 1.2 liste des rôles (generic, presentation/none et les rôles de texte en ligne) pour lesquels le nom est interdit : aria-label et aria-labelledby y sont une erreur de conformité et sont ignorés par les technologies d’assistance.",
+  "suggestions": [{"title": "Supprimer l’attribut", "description": "role=\"{role}\" ne peut pas recevoir de nom. Si l’élément a besoin d’un nom accessible, donnez-lui un rôle qui en accepte un (ou utilisez du texte visible ou un élément englobant étiqueté)."}]},
+ "COMP1004": {"message": "{scope} : enfant inattendu ⟦{typeName}⟧ à l’index {index}."},
+ "COMP1005": {"message": "{scope} : l’enfant ⟦{typeName}⟧ à l’index {index} correspond à plusieurs règles d’enfants : {ruleNames|quote|list}."},
+ "COMP1006": {"message": "{scope} : ⟦{ruleName}⟧ exige au moins {min}."},
+ "COMP1007": {"message": "{scope} : ⟦{ruleName}⟧ en autorise au plus {max}."},
+ "COMP1008.first": {"message": "{scope} : ⟦{ruleName}⟧ doit venir en premier, obtenu à l’index {index}"},
+ "COMP1008.last": {"message": "{scope} : ⟦{ruleName}⟧ doit venir en dernier, obtenu à l’index {index}"},
+ "COMP1009": {"message": "<{component}> : la prop \"as\" a reçu \"{tag}\", mais seuls [{allowedAs|quote|list-unit}] sont autorisés."},
+ "COMP1010": {"message": "{component} : {label} fait référence à la variante inconnue \"{dim}\"."},
+ "COMP1011": {"message": "{component} : {label} définit \"{dim}\" sur la valeur inconnue \"{value}\" (valides : {valid|list-unit})."},
+ "COMP1012": {"message": "{component} : recipeKey \"{key}\" inconnu — aucun préréglage de ce nom n’existe."},
+ "COMP1013": {"message": "{component} : la variante \"{key}={value}\" n’est pas une valeur définie pour la dimension \"{key}\"."},
+ "SLOT1001": {"message": "{name} : \"as\" et \"asChild\" sont mutuellement exclusifs"},
+ "SLOT1002.required": {"message": "{name} : asChild exige un enfant {elementTerm}"},
+ "SLOT1002.exceeded": {"message": "{name} : asChild exige exactement un enfant {elementTerm}, obtenu {count}"},
+ "SLOT1003": {"message": {"plural": "count",
+   "one": "{name} : asChild a écarté {count} enfant qui n’est pas un élément — seuls les {elementTerm} sont des enfants asChild valides.",
+   "other": "{name} : asChild a écarté {count} enfants qui ne sont pas des éléments — seuls les {elementTerm} sont des enfants asChild valides."}},
+ "SLOT1004": {"message": "{name} : asChild exige une fonction de rendu comme enfant, obtenu {received}"},
+ "SLOT1005": {"message": "{name} : asChild a été composé sur \"{childTag}\", qui ne fait pas partie de [{allowedAs|quote|list-unit}] — le comportement de {name} dépend de la balise résolue, donc les fonctionnalités natives risquent de ne pas marcher."},
+ "A11Y8100": {
+  "message": "Ce champ n’a pas de nom accessible. Ajoutez un <label> associé, aria-label ou aria-labelledby.",
+  "rationale": "Les technologies d’assistance annoncent un champ de formulaire par son nom accessible ; sans lui, les personnes qui utilisent un lecteur d’écran ne peuvent pas savoir à quoi sert le champ.",
+  "suggestions": NAME_FIELD},
+ "A11Y8101": {
+  "message": "Le texte indicatif (placeholder) ne fournit pas de nom accessible. Ajoutez un <label> associé, aria-label ou aria-labelledby.",
+  "rationale": "Le texte indicatif disparaît dès que l’on interagit avec le champ, et de nombreuses technologies d’assistance ne le traitent pas comme le nom accessible du contrôle.",
+  "suggestions": NAME_FIELD},
+ "A11Y8102": {
+  "message": "Les champs de mot de passe devraient préciser une valeur autoComplete.",
+  "rationale": "Sans indication autocomplete explicite, les gestionnaires de mots de passe et les navigateurs ne peuvent pas distinguer de façon fiable un champ de connexion d’un champ de création de mot de passe.",
+  "suggestions": [
+   {"title": "Définir autoComplete=\"current-password\"", "description": "À utiliser pour les formulaires de connexion."},
+   {"title": "Définir autoComplete=\"new-password\"", "description": "À utiliser pour les formulaires d’inscription ou de changement de mot de passe."}]},
+ "A11Y8103": {
+  "message": "\"required\" est sans effet tant que ce champ est en lecture seule (readOnly) — la combinaison des deux attributs signale généralement un état involontaire.",
+  "rationale": "La combinaison est du HTML valide, mais un contrôle en lecture seule ne peut pas être modifié : sa contrainte \"required\" ne peut donc jamais être satisfaite ni violée par une action de l’utilisateur. Envisagez disabled plutôt que readOnly, ou n’appliquez required que lorsque le champ est modifiable."},
+ "A11Y8200": {
+  "message": "role=\"button\" sur un <a> avec href remplace sa sémantique de navigation pour les technologies d’assistance ; utilisez un vrai <button>, ou retirez href, si cet élément ne doit pas naviguer.",
+  "rationale": "Les technologies d’assistance annoncent role=\"button\" comme un bouton, et non comme un lien — mais l’élément suit toujours le lien lorsqu’on l’active à la souris ou au clavier, ce qui est déroutant et incohérent avec le comportement attendu d’un bouton.",
+  "suggestions": [
+   {"title": "Utiliser un vrai <button>", "description": "Si cet élément ne doit pas naviguer, affichez un <button> plutôt qu’un <a>."},
+   {"title": "Supprimer role=\"button\"", "description": "Si cet élément doit naviguer, conservez le rôle de lien par défaut."}]},
+ "A11Y8201": {
+  "message": "aria-disabled n’empêche pas un <a> d’être focalisé, cliqué ou activé au clavier ; retirez href, ou empêchez vous-même la navigation, si ce lien doit être inerte.",
+  "rationale": "Contrairement à un contrôle de formulaire natif, un <a> n’a pas d’état désactivé imposé par le navigateur — aria-disabled ne change que ce que la technologie d’assistance annonce, pas ce qui se passe réellement lorsque le lien est activé à la souris ou au clavier.",
+  "suggestions": [
+   {"title": "Supprimer href", "description": "Si cet élément est momentanément indisponible, retirez href jusqu’à ce qu’il puisse être activé."},
+   {"title": "Empêcher la navigation lorsqu’il est désactivé", "description": "Bloquez le clic et l’activation au clavier lorsque le lien est désactivé, pour qu’il se comporte de la même façon pour tout le monde."}]},
+}
+
+def fix(o):
+    if isinstance(o, str): return o.replace("⟦", "« ").replace("⟧", " »")
+    if isinstance(o, list): return [fix(x) for x in o]
+    if isinstance(o, dict): return {k: fix(v) for k, v in o.items()}
+    return o
+
+catalog = {
+  "$schema": "../node_modules/praxis-kit-diagnostics/dist/schema.json",
+  "$comment": "French (fr). DRAFT: machine-assisted, not yet reviewed by a native speaker. See glossary.md.",
+  "contract": 1,
+  "locale": "fr",
+  "messages": fix(M),
+}
+# UTF-8 throughout: accented letters and typographic punctuation (’ « ») are written as themselves.
+# Only invisible characters are written as \uXXXX escapes, so a reviewer can see them in the diff.
+text = json.dumps(catalog, ensure_ascii=False, indent=2)
+for char in ("\u00a0", "\u202f", "\u200b"):
+    text = text.replace(char, "\\u%04x" % ord(char))
+with open("catalog/fr.json", "w", encoding="utf-8", newline="\n") as f:
+    f.write(text + "\n")
+print(len(M), "entries")

@@ -1,0 +1,26 @@
+{
+  "name": "praxis-kit-diagnostics-fr",
+  "version": "0.1.0",
+  "description": "French (fr) diagnostic messages for Praxis Kit. DRAFT: machine-assisted, not yet reviewed by a native speaker.",
+  "keywords": ["praxis-kit", "diagnostics", "i18n", "l10n", "french", "fr", "accessibility"],
+  "license": "MIT",
+  "author": "Karsten Huehn",
+  "repository": { "type": "git", "url": "git+https://github.com/slowebworkz/praxis-kit-diagnostics-fr.git" },
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": { "types": "./index.d.ts", "import": "./index.js" },
+    "./fr.json": "./catalog/fr.json",
+    "./package.json": "./package.json"
+  },
+  "files": ["index.js", "index.d.ts", "catalog/fr.json", "glossary.md"],
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "validate": "praxis-kit-diagnostics validate catalog/fr.json --min-coverage 100",
+    "test": "node --test \"tests/*.test.mjs\"",
+    "check:package": "node scripts/check-package.mjs",
+    "build:catalog": "python3 -I scripts/build-catalog.py"
+  },
+  "peerDependencies": { "praxis-kit-diagnostics": ">=0.2.0 <1" },
+  "devDependencies": { "praxis-kit-diagnostics": "^0.2.0" }
+}
